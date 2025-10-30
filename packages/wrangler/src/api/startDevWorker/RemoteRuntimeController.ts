@@ -47,7 +47,9 @@ export class RemoteRuntimeController extends RuntimeController {
 	#activeTail?: WebSocket;
 
 	async #previewSession(
-		props: Parameters<typeof getWorkerAccountAndContext>[0]
+		props: Parameters<typeof getWorkerAccountAndContext>[0] & {
+			tail_logs: boolean;
+		}
 	): Promise<CfPreviewSession | undefined> {
 		try {
 			const { workerAccount, workerContext } =
@@ -56,7 +58,8 @@ export class RemoteRuntimeController extends RuntimeController {
 			return await createPreviewSession(
 				workerAccount,
 				workerContext,
-				this.#abortController.signal
+				this.#abortController.signal,
+				props.tail_logs
 			);
 		} catch (err: unknown) {
 			if (err instanceof Error && err.name == "AbortError") {
@@ -70,7 +73,11 @@ export class RemoteRuntimeController extends RuntimeController {
 	async #previewToken(
 		props: Omit<CreateRemoteWorkerInitProps, "name"> &
 			Partial<Pick<CreateRemoteWorkerInitProps, "name">> &
-			Parameters<typeof getWorkerAccountAndContext>[0] & { bundleId: number }
+			Parameters<typeof getWorkerAccountAndContext>[0] & {
+				bundleId: number;
+				minimal_mode?: boolean;
+				tail_logs: boolean;
+			}
 	): Promise<CfPreviewToken | undefined> {
 		if (!this.#session) {
 			return;
@@ -93,6 +100,7 @@ export class RemoteRuntimeController extends RuntimeController {
 			if (props.bundleId !== this.#currentBundleId) {
 				return;
 			}
+			this.#activeTail?.terminate();
 			const { workerAccount, workerContext } = await getWorkerAccountAndContext(
 				{
 					accountId: props.accountId,
@@ -146,6 +154,21 @@ export class RemoteRuntimeController extends RuntimeController {
 				this.#abortController.signal
 			);
 
+			if (props.tail_logs && workerPreviewToken.tailUrl) {
+				this.#activeTail = new WebSocket(
+					workerPreviewToken.tailUrl,
+					TRACE_VERSION,
+					{
+						headers: {
+							"Sec-WebSocket-Protocol": TRACE_VERSION, // needs to be `trace-v1` to be accepted
+							"User-Agent": `wrangler/${packageVersion}`,
+						},
+						signal: this.#abortController.signal,
+					}
+				);
+
+				this.#activeTail.on("message", realishPrintLogs);
+			}
 			return workerPreviewToken;
 		} catch (err: unknown) {
 			if (err instanceof Error && err.name == "AbortError") {
@@ -203,6 +226,7 @@ export class RemoteRuntimeController extends RuntimeController {
 				routes,
 				sendMetrics: config.sendMetrics,
 				configPath: config.config,
+				tail_logs: !!config.experimental?.tailLogs,
 			});
 
 			const { bindings } = await convertBindingsToCfWorkerInitBindings(
@@ -242,6 +266,7 @@ export class RemoteRuntimeController extends RuntimeController {
 				sendMetrics: config.sendMetrics,
 				configPath: config.config,
 				bundleId: id,
+				tail_logs: !!config.experimental?.tailLogs,
 			});
 
 			// If we received a new `bundleComplete` event before we were able to
@@ -304,12 +329,12 @@ export class RemoteRuntimeController extends RuntimeController {
 				entrypointAddresses: {},
 			};
 
-			this.emitReloadCompleteEvent({
-				type: "reloadComplete",
-				bundle,
-				config,
-				proxyData,
-			});
+		this.emitReloadCompleteEvent({
+			type: "reloadComplete",
+			bundle,
+			config,
+			proxyData,
+		});
 		} catch (error) {
 			if (error instanceof Error && error.name == "AbortError") {
 				return; // ignore

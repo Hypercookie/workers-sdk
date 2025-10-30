@@ -39,7 +39,6 @@ export function realishPrintLogs(data: WebSocket.RawData): void {
 		});
 	}
 }
-
 export function prettyPrintLogs(data: WebSocket.RawData): void {
 	const eventMessage: TailEventMessage = JSON.parse(data.toString());
 
