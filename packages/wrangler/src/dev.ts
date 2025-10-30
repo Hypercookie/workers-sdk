@@ -61,6 +61,9 @@ export const dev = createCommand({
 			MULTIWORKER: Array.isArray(args.config),
 			RESOURCES_PROVISION: args.experimentalProvision ?? false,
 			ASSETS_RPC: args.experimentalAssetsRpc,
+			DEPLOY_REMOTE_DIFF_CHECK: false,
+			AUTOCREATE_RESOURCES: args.experimentalAutoCreate,
+			REALISH_TAIL_LOGS: args.experimentalTailLogs,
 		}),
 	},
 	metadata: {
@@ -334,6 +337,13 @@ export const dev = createCommand({
 			describe: "Support JSRPC bindings to Workers + Assets projects",
 			default: false,
 			hidden: true,
+		},
+		"experimental-tail-logs": {
+			type: "boolean",
+			alias: ["x-tail-logs"],
+			describe:
+				"Experimental: Use a tail URL for runtime logs rather than the inspector",
+			default: false,
 		},
 	},
 	async validateArgs(args) {
