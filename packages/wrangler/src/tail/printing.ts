@@ -26,10 +26,7 @@ export function realishPrintLogs(data: WebSocket.RawData): void {
 
 	if (eventMessage.logs.length > 0) {
 		eventMessage.logs.forEach(({ level, message }) => {
-			logger.console(
-				level as Exclude<keyof Console, "Console">,
-				...message
-			);
+			logger.console(level as Exclude<keyof Console, "Console">, ...message);
 		});
 	}
 

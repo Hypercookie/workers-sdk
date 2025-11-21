@@ -318,9 +318,7 @@ export class RemoteRuntimeController extends RuntimeController {
 							},
 				headers: {
 					"cf-workers-preview-token": token.value,
-					...(accessToken
-						? { Cookie: `CF_Authorization=${accessToken}` }
-						: {}),
+					...(accessToken ? { Cookie: `CF_Authorization=${accessToken}` } : {}),
 					"cf-connecting-ip": "",
 				},
 				liveReload: config.dev.liveReload,
@@ -329,12 +327,12 @@ export class RemoteRuntimeController extends RuntimeController {
 				entrypointAddresses: {},
 			};
 
-		this.emitReloadCompleteEvent({
-			type: "reloadComplete",
-			bundle,
-			config,
-			proxyData,
-		});
+			this.emitReloadCompleteEvent({
+				type: "reloadComplete",
+				bundle,
+				config,
+				proxyData,
+			});
 		} catch (error) {
 			if (error instanceof Error && error.name == "AbortError") {
 				return; // ignore
