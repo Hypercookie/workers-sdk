@@ -1,3 +1,4 @@
+import { Analog } from "./analog";
 import { Angular } from "./angular";
 import { Astro } from "./astro";
 import { Static } from "./static";
@@ -18,6 +19,8 @@ export function getFramework(detectedFramework?: {
 			return new TanstackStart(detectedFramework.name);
 		case "angular":
 			return new Angular(detectedFramework.name);
+		case "analog":
+			return new Analog(detectedFramework.name);
 		default:
 			return new Static(detectedFramework?.name);
 	}

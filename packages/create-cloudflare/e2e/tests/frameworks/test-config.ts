@@ -765,6 +765,27 @@ function getExperimentalFrameworkTestConfig(
 			flags: ["--style", "sass"],
 			verifyTypes: false,
 		},
+		{
+			name: "analog",
+			quarantine: true,
+			testCommitMessage: true,
+			timeout: LONG_TIMEOUT,
+			unsupportedOSs: ["win32"],
+			// The analog template works with yarn, but the build takes so long that it
+			// becomes flaky in CI
+			unsupportedPms: ["yarn", "bun"],
+			verifyDeploy: {
+				route: "/",
+				expectedText: "The fullstack meta-framework for Angular!",
+			},
+			verifyPreview: {
+				previewArgs: ["--inspector-port=0"],
+				route: "/api/v1/test",
+				expectedText: "C3_TEST",
+			},
+			nodeCompat: false,
+			flags: ["--skipTailwind"],
+		},
 	];
 }
 
